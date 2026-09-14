@@ -1,0 +1,20 @@
+.env
+.env.testnet
+*.db
+/slotfared.db
+/dist/
+node_modules/
+web/dist/
+web/.angular/
+.angular/
+
+# Reference clones of third-party code kept out of the repository.
+# Never commit them here.
+/reference/
+
+# Rust build output — includes the program upgrade keypair; never commit.
+target/
+
+# OS / tooling noise.
+.DS_Store
+/bin/
