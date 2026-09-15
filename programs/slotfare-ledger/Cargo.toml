@@ -1,0 +1,31 @@
+[package]
+name = "slotfare-ledger"
+version = "0.1.0"
+edition = "2021"
+authors = ["vishnuraj <vishnurjd@gmail.com>"]
+description = "Slotfare on-chain credit ledger: balances and locks that only settle against a committed usage root."
+license = "MIT"
+
+# The state machine and the instruction codec have ZERO dependencies on
+# purpose. `cargo test` therefore verifies the ledger's invariants with no
+# Solana toolchain and no network, which is what CI can rely on.
+#
+# The on-chain entrypoint needs solana-program and is behind `onchain`, so the
+# default build never depends on the Solana crate tree.
+[features]
+default = []
+onchain = [
+    "dep:solana-program",
+    "dep:solana-system-interface",
+    # `create_account` itself is behind this on the system interface crate.
+    "solana-system-interface/bincode",
+]
+
+[dependencies]
+solana-program = { version = "3", optional = true }
+# solana-program 3.0 moved the system program's interface into its own crate
+# and no longer re-exports it; `create_account` lives here now.
+solana-system-interface = { version = "2", optional = true }
+
+[lib]
+crate-type = ["cdylib", "lib"]

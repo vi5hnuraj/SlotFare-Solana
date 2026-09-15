@@ -1,0 +1,11 @@
+node_modules
+dist
+.angular
+coverage
+__screenshots__
+.git
+.sf
+.vscode
+npm-debug.log
+.DS_Store
+testem.log
