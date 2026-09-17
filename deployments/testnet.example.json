@@ -1,0 +1,14 @@
+{
+  "_comment": "Template only. Copy to devnet.json and replace every value. See deployments/README.md. Never put a private key in this directory; feePayer is the PUBLIC key.",
+  "environment": "devnet",
+  "cluster": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "treasury": "REPLACE_WITH_THE_TREASURY_TOKEN_ACCOUNT",
+  "mint": "REPLACE_WITH_THE_SPL_MINT",
+  "feePayer": "REPLACE_WITH_THE_FEE_PAYER_PUBLIC_KEY",
+  "commitProgram": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+  "consoleUrl": "REPLACE_WITH_THE_CONSOLE_ORIGIN",
+  "apiUrl": "REPLACE_WITH_THE_DAEMON_PUBLIC_BASE_URL",
+  "deployedAt": "REPLACE_WITH_ISO8601_TIMESTAMP",
+  "gitRevision": "REPLACE_WITH_THE_DEPLOYED_REVISION"
+}
