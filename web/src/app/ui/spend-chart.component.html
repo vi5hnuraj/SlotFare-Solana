@@ -1,0 +1,33 @@
+<div class="chart" [style.--chart-axis-font.px]="axisFont()">
+  <svg [attr.viewBox]="viewBox" role="img" [attr.aria-label]="description()">
+    @for (g of gridLines(); track g.value) {
+      <line class="grid-line" [attr.x1]="padLeft" [attr.y1]="g.y"
+            [attr.x2]="width" [attr.y2]="g.y" />
+      <text class="axis" [attr.x]="axisTextX" [attr.y]="g.y + 3.5"
+            text-anchor="end">{{ g.label }}</text>
+    }
+    @for (b of bars(); track b.index) {
+      <rect class="bar" [class.wknd]="b.weekend" [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" rx="1.5"
+            (mouseenter)="hovered.set(b)" (mouseleave)="hovered.set(null)">
+        <title>{{ b.title }}</title>
+      </rect>
+    }
+    @for (a of axisLabels(); track a.x) {
+      <text class="axis" [attr.x]="a.x" [attr.y]="a.y" text-anchor="middle">{{ a.text }}</text>
+    }
+    @if (!empty()) {
+      <line class="mean-line" [attr.x1]="padLeft" [attr.y1]="meanY()"
+            [attr.x2]="width" [attr.y2]="meanY()" />
+      <text class="axis" [attr.x]="width" [attr.y]="meanY() - 6" text-anchor="end"
+            style="fill:var(--gold-fg)">{{ meanLabel() }}</text>
+    }
+  </svg>
+  @if (empty()) {
+    <p class="chart-empty">No requests in this window yet. The first metered call draws the first bar.</p>
+  }
+
+  @if (tipStyle(); as pos) {
+    <div class="chart-tip on" [style.left]="pos.left" [style.top]="pos.top">{{ tipText() }}</div>
+  }
+</div>

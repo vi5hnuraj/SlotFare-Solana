@@ -1,0 +1,94 @@
+<div class="app"
+     [class.bp-mobile]="bp() === 'mobile'"
+     [class.bp-tablet]="bp() === 'tablet'"
+     [class.bp-desktop]="bp() === 'desktop'">
+  <aside class="rail" id="slf-drawer" [class.drawer-open]="drawerOpen()">
+    <div class="brand">
+      <img src="slotfare-logo.svg" alt="" width="56" height="56">
+      <span class="wordmark"><span class="f">Slot</span><span class="b">fare</span></span>
+    </div>
+
+    <nav class="nav" aria-label="Console">
+      @for (item of primaryNav; track item.path) {
+        <a class="nav-item" [routerLink]="item.path" routerLinkActive="is-active"
+           ariaCurrentWhenActive="page">
+          <slf-icon [name]="item.icon" />
+          {{ item.label }}
+        </a>
+      }
+      <div class="nav-group eyebrow">Build</div>
+      @for (item of buildNav; track item.path) {
+        <a class="nav-item" [routerLink]="item.path" routerLinkActive="is-active"
+           ariaCurrentWhenActive="page">
+          <slf-icon [name]="item.icon" />
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="rail-foot">
+      <div class="eyebrow">Balance</div>
+      <div class="u-num fig-sm">{{ store.balanceText() }}</div>
+      <div class="money" style="font-size:13px;margin-top:2px">{{ store.balanceUsd() }}</div>
+      @if (store.locked() > 0) {
+        <div class="lock-line" style="font-size:12px;margin-top:4px">
+          {{ store.lockedText() }} locked
+        </div>
+      }
+    </div>
+  </aside>
+
+  @if (bp() !== 'desktop' && drawerOpen()) {
+    <div class="scrim" (click)="closeDrawer()"></div>
+  }
+
+    <div class="main">
+    <header class="topbar">
+      @if (bp() !== 'desktop') {
+        <button class="icon-btn menu-btn" type="button"
+                [attr.aria-label]="drawerOpen() ? 'Close navigation' : 'Open navigation'"
+                [attr.aria-expanded]="drawerOpen()"
+                aria-controls="slf-drawer"
+                (click)="toggleDrawer()">
+          <slf-icon [name]="drawerOpen() ? 'close' : 'menu'" />
+        </button>
+      }
+      <div class="topbar-title">
+        <h1>{{ title() }}</h1>
+        <div class="sub">{{ subtitle() }}</div>
+      </div>
+      <div class="topbar-right">
+        <button class="wallet-chip" type="button" [title]="store.address()">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="addr">{{ chipAddress(store.address()) }}</span>
+        </button>
+        <button class="icon-btn" type="button" (click)="theme.toggle()"
+                [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+          <slf-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+        </button>
+        <button class="btn btn-secondary btn-sm" type="button" (click)="disconnect()">
+          Disconnect
+        </button>
+      </div>
+    </header>
+
+    @if (store.sessionExpired()) {
+      <div class="session-recovery state-block">
+        <h4>Session ended</h4>
+        <p>Sign in again with your wallet to continue.</p>
+        <div class="actions">
+          <button class="btn btn-primary" type="button" (click)="reauth()">
+            Sign in again
+          </button>
+          <button class="btn btn-secondary" type="button" (click)="chooseWallet()">
+            Choose a different wallet
+          </button>
+        </div>
+      </div>
+    }
+
+    <router-outlet />
+  </div>
+</div>
+
+<slf-toast />

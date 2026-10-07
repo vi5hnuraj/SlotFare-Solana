@@ -1,0 +1,5 @@
+/* The design system as shipped by the design pass, imported verbatim.
+   Component styles stay empty on purpose: divergence between this file and
+   the design export is the thing most likely to rot, so there is exactly
+   one copy of the visual language and it is this one. */
+@use './styles/slotfare.scss';

@@ -1,0 +1,1 @@
+Brand marks from Simple Icons (https://simpleicons.org, CC0-1.0), recoloured to a single light glyph for the dark logo tile. Trademarks belong to their owners. zai and thinking-machines are neutral monograms until an official mark is sourced.
