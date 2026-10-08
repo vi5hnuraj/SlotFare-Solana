@@ -1,0 +1,111 @@
+<slf-fireworks />
+<div class="connect-wrap">
+  <header class="connect-bar">
+    <div class="connect-brand">
+      <img src="slotfare-logo.svg" alt="" width="34" height="34">
+      <span class="wordmark"><span class="f">Slot</span><span class="b">fare</span></span>
+    </div>
+    <span class="pill pill-value connect-win">
+      <slf-icon name="check" [width]="2.4" /> Based on Slotfare · ported to Solana for Crypto World's Fair 2026
+    </span>
+    <div class="connect-bar-right">
+      <button class="icon-btn" type="button" (click)="theme.toggle()"
+              [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <slf-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+    </div>
+  </header>
+
+  <div class="connect-ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <div class="ticker-line">DEPOSIT USDC <b>+</b> MINT CREDITS <b>+</b> METER EVERY CALL <b>+</b> SETTLE ON CHAIN <b>+</b></div>
+      <div class="ticker-line">DEPOSIT USDC <b>+</b> MINT CREDITS <b>+</b> METER EVERY CALL <b>+</b> SETTLE ON CHAIN <b>+</b></div>
+    </div>
+  </div>
+
+  <main class="connect-main">
+    <div class="connect-hero">
+      <div class="connect-copy">
+        <div class="connect-mark">
+          <img src="slotfare-logo.svg" alt="Slotfare" width="72" height="72">
+        </div>
+        <p class="connect-kicker">Metered AI on Solana</p>
+        <h1 class="connect-h1">Prepaid credits. Paid in USDC.</h1>
+        <p class="connect-lede">
+          Deposit USDC on Solana, spend metered credits against inference and
+          RPC endpoints, and watch every settlement batch land on chain as a
+          public usage root. Your wallet is the account.
+        </p>
+
+        <div class="eyebrow" style="margin-top:var(--s5);margin-bottom:10px">
+          Detected wallets · Solana · {{ walletSvc.providers().length }} {{ walletSvc.providers().length === 1 ? 'provider' : 'providers' }}
+        </div>
+
+        @if (walletSvc.providers().length === 0) {
+          <slf-error-block title="No wallet detected"
+                           [message]="'Install a browser wallet such as Phantom, then reload this page.'"
+                           [showRetry]="false" (dismiss)="walletSvc.dismissError()" />
+        } @else {
+          <div class="wallet-list">
+            @for (w of walletSvc.providers(); track w.rdns) {
+              <button class="wallet-opt" type="button" (click)="connect(w.rdns)"
+                      [disabled]="walletSvc.connecting()">
+                @if (w.icon && !iconFailed().has(w.icon)) {
+                  <img class="avatar" [src]="w.icon" alt="" aria-hidden="true"
+                       (error)="markIconFailed(w.icon)">
+                } @else {
+                  <span class="avatar" aria-hidden="true">{{ w.initial }}</span>
+                }
+                <span><span class="nm">{{ w.name }}</span><span class="rd">{{ w.rdns }}</span></span>
+                <span class="go" aria-hidden="true"><slf-icon name="chevron" [width]="2" /></span>
+              </button>
+            }
+          </div>
+        }
+
+        @if (signing()) {
+          <div class="notice" style="margin-top:12px" aria-live="polite">
+            <slf-icon name="shield" [width]="1.8" />
+            <span>
+              <b>Sign the message in your wallet.</b> It proves you control
+              {{ walletSvc.address() }}. Nothing is sent on-chain and no funds move.
+            </span>
+          </div>
+        }
+
+        @if (walletSvc.error(); as err) {
+          <div style="margin-top:12px">
+            <slf-error-block [title]="walletSvc.address() !== null ? 'Sign-in failed' : 'Connection failed'"
+                             [message]="err" (retry)="retryConnect()" (dismiss)="walletSvc.dismissError()" />
+          </div>
+        }
+      </div>
+
+      <div class="connect-stage" aria-hidden="true">
+        <div class="sun"></div>
+        <p class="connect-stage-note">Your wallet<br>is the account</p>
+        <div class="connect-mock">
+          <div class="mock-top"><span>9:41</span><span class="signal">)))</span></div>
+          <p class="mock-label">Deposit</p>
+          <p class="mock-amount"><sup>$</sup>2.50</p>
+          <div class="mock-card">
+            <span class="mock-avatar">S</span>
+            <span><b>Slotfare Treasury</b><small>USDC · Solana devnet</small></span>
+            <i>Verified</i>
+          </div>
+          <div class="mock-tap">
+            <span class="waves">)))</span>
+            <b>Ready to settle</b>
+            <small>Usage root lands on chain</small>
+          </div>
+        </div>
+        <p class="connect-vert">Deposit / Spend / Settle</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="connect-foot">
+    <a class="xlink" href="/roadmap">What&rsquo;s next for Slotfare <slf-icon name="chevron" [width]="2" /></a>
+    <div>Connecting only reads your address. No transaction is signed and no funds move.</div>
+  </footer>
+</div>
