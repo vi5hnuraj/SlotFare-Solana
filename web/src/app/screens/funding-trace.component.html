@@ -1,0 +1,232 @@
+<section class="page">
+  <a class="xlink" routerLink="/funding" style="display:inline-flex;margin-bottom:var(--s3)">
+    <slf-icon name="chevron" [width]="2" style="transform:rotate(180deg)" /> All purchases
+  </a>
+  <div class="page-head">
+    <h2>Funding trace</h2>
+    @if (isDirect()) {
+      <p>
+        Deposited on Solana and credited in the same transaction. The step below
+        is the on-chain fact; follow it to the block explorer.
+      </p>
+    } @else {
+      <p>
+        A purchase imported from before this deployment. Your payment was proven
+        from its source chain to the credit ledger at the time it was made; every
+        step below is a verifiable on-chain fact, not an estimate. Follow any of
+        them to a block explorer.
+      </p>
+    }
+  </div>
+
+  <div class="split">
+    <div class="card">
+      <div class="card-head">
+        <h3>Funding trace</h3>
+        <span class="spacer"></span>
+        @if (store.fundingStatus() !== null) {
+          <span class="pill" [class.pill-ok]="store.traceComplete()"
+                [class.pill-live]="!store.traceComplete()">
+            {{ store.traceComplete() ? 'Credits available' : 'Proving payment' }}
+          </span>
+        }
+      </div>
+
+      @if (store.fundingInitial()) {
+        <slf-skeleton rows="6" />
+      } @else if (store.fundingError()) {
+        <slf-error-block [message]="store.fundingError()!"
+                         (retry)="store.startPolling()"
+                         (dismiss)="store.clearFundingError()" />
+      } @else if (notFound()) {
+        <slf-empty-block title="Purchase not found"
+                         detail="No purchase with this id belongs to the connected account."
+                         icon="route" />
+        <a class="btn btn-secondary btn-block" routerLink="/funding"
+           style="margin-top:var(--s4)">All purchases</a>
+      } @else if (store.fundingStatus() !== null) {
+        <div class="trace">
+        <div class="trace-head">
+          <div class="grow">
+            <div class="eyebrow">{{ store.stepLabel() }}</div>
+            <div class="trace-steps-bar">
+              @for (s of store.segments(); track $index) {
+                <i [class.done]="s.state === 'done'" [class.live]="s.state === 'live'"
+                   [style.--p.%]="s.percent"></i>
+              }
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="eyebrow" style="margin-bottom:6px">Elapsed</div>
+            <div class="elapsed">{{ store.elapsedText() }}</div>
+            <div class="muted" style="font-size:12px;margin-top:4px">{{ store.etaText() }}</div>
+          </div>
+        </div>
+
+        <div aria-live="polite" [attr.aria-busy]="!store.traceComplete()">
+          @for (step of store.steps(); track step.index) {
+            @if (step.laneStart) {
+              <div class="lane {{ step.laneCss }}">
+                <span class="chip" aria-hidden="true"></span>{{ step.laneLabel }}
+              </div>
+            }
+            <div class="step is-{{ step.state }}">
+              <div class="step-rail">
+                <div class="step-node">
+                  <svg class="ring" viewBox="0 0 26 26" aria-hidden="true">
+                    <circle class="ring-track" cx="13" cy="13" r="11" />
+                    <circle class="ring-fill" cx="13" cy="13" r="11"
+                            [attr.stroke-dasharray]="ring"
+                            [attr.stroke-dashoffset]="dashOffset(step.progress)" />
+                  </svg>
+                  <span class="glyph">
+                    @if (step.state === 'done') {
+                      <slf-icon name="check" [width]="3" />
+                    } @else {
+                      {{ step.index + 1 }}
+                    }
+                  </span>
+                </div>
+                <div class="step-line"></div>
+              </div>
+
+              <div class="step-body">
+                <div class="step-title">
+                  <h4>{{ step.title }}</h4>
+                  @switch (step.state) {
+                    @case ('done') { <span class="pill pill-ok">Settled</span> }
+                    @case ('live') { <span class="pill pill-live">In progress</span> }
+                    @default { <span class="pill pill-wait">Queued</span> }
+                  }
+                  <span class="when">{{ step.when }}</span>
+                </div>
+
+                <div class="step-meta">
+                  @for (row of step.meta; track row.label) {
+                    <div><span>{{ row.label }}</span><b>{{ row.value }}</b></div>
+                  }
+                </div>
+
+                @if (step.confirmation; as c) {
+                  <div class="conf">
+                    @switch (c.kind) {
+                      @case ('meter') {
+                        <div class="meter" style="width:120px"><i [style.width.%]="c.percent"></i></div>
+                        <span>{{ c.text }}</span>
+                      }
+                      @case ('ticks') {
+                        <div class="conf-ticks" aria-hidden="true">
+                          @for (i of ticks(c.total); track i) {
+                            <i [class.on]="i < c.on"></i>
+                          }
+                        </div>
+                        <span><b>{{ c.on }} of {{ c.total }}</b> confirmations · {{ c.text }}</span>
+                      }
+                      @case ('value') {
+                        <span class="pill pill-value">{{ c.text }}</span>
+                      }
+                    }
+                  </div>
+                }
+
+                @if (step.linkHref) {
+                  <div class="step-actions">
+                    <a class="xlink" [href]="step.linkHref" target="_blank" rel="noopener">
+                      {{ step.linkLabel }}
+                      <slf-icon name="external" [width]="2" />
+                    </a>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      } @else {
+        <slf-empty-block title="No purchase in flight"
+                         detail="Credits are bought on the Add credits screen. The trace appears here the moment a payment starts."
+                         icon="route" />
+        <a class="btn btn-secondary btn-block" routerLink="/add"
+           style="margin-top:var(--s4)">Add credits</a>
+      }
+    </div>
+
+    <div class="grid kv-list">
+
+      @if (store.fundingStatus() !== null) {
+      <div class="card">
+        <div class="card-head"><h3>Purchase</h3></div>
+        <div class="card-body">
+          <div class="kv"><span>Paid</span><b>{{ store.purchase().paidText }}</b></div>
+          @if (store.purchase().paidSub) {
+            <div class="kv"><span></span><b class="muted">{{ store.purchase().paidSub }}</b></div>
+          }
+          <div class="kv"><span>Credits</span><b>{{ creditText(store.purchase().credits) }} credits</b></div>
+          <div class="kv"><span>Value</span><b class="money">{{ usd(store.purchase().credits) }}</b></div>
+          <div class="kv"><span>From wallet</span><b>{{ mid(store.address(), 18) }}</b></div>
+          <div class="kv"><span>Credit account</span><b>{{ mid(store.address(), 18) }}</b></div>
+          <div class="kv"><span>Started</span><b>{{ localTime(store.purchase().startedAt) }}</b></div>
+        </div>
+      </div>
+
+      @if (!store.traceComplete()) {
+        <div class="card">
+          <div class="card-head"><h3>Nothing to do</h3></div>
+          <div class="card-body"
+               style="font-size:13.5px;line-height:1.65;color:var(--fg-2);display:grid;gap:10px">
+            @if (store.fundingStatus(); as fs) {
+              @if (fs.ethBlock === 0) {
+                <p>
+                  Your deposit is final on Solana and the credits mint in the
+                  same transaction. The ledger is catching up; nothing else runs.
+                </p>
+              } @else {
+                <p>
+                  Your payment is already final on its source chain. The remaining
+                  steps run without you.
+                </p>
+              }
+            }
+            <p>
+              You can close this page, disconnect, or start a second purchase.
+              Credits appear in your balance the moment the last step lands.
+            </p>
+          </div>
+        </div>
+      } @else {
+        <div class="card">
+          <div class="card-head">
+            <h3>Credits available</h3><span class="spacer"></span>
+            <span class="pill pill-ok">Settled</span>
+          </div>
+          <div class="card-body">
+            <div class="u-num fig-md">
+              +{{ creditText(store.purchase().credits) }}
+            </div>
+            <p class="muted" style="font-size:13px;margin-top:6px">
+              Minted on Solana at slot {{ num(store.purchase().ccBlock) }}
+              and spendable immediately.
+            </p>
+            <a class="btn btn-secondary btn-block" routerLink="/overview"
+               style="margin-top:var(--s4)">Back to overview</a>
+          </div>
+        </div>
+      }
+      } @else {
+        @if (store.fundingInitial()) {
+          <slf-skeleton rows="3" />
+        }
+      }
+
+      <div class="notice">
+        <slf-icon name="shield" [width]="1.8" />
+        <span>
+          <b>Account-less is not anonymous.</b> The payment transaction is public
+          and permanently links the paying wallet to this credit account. If you
+          need that link broken, fund from a fresh address.
+        </span>
+      </div>
+
+    </div>
+  </div>
+</section>

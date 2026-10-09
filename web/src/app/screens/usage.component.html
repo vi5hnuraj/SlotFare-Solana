@@ -1,0 +1,292 @@
+<section class="page">
+  <div class="page-head">
+    <h2>Usage</h2>
+    <p>
+      Every request, every token class, every credit. Charges are computed at
+      the per-million rates on the pricing screen and settled against your
+      balance the moment a response completes.
+    </p>
+  </div>
+
+  <div class="grid" style="gap:var(--s4)">
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Credits spent per day</h3>
+        <span class="spacer"></span>
+        <div class="seg" role="group" aria-label="Range">
+          @for (r of ranges; track r) {
+            <button type="button" [attr.aria-pressed]="currentRange() === r"
+                    (click)="onRange(r)">{{ r }}</button>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        @if (store.usageError()) {
+          <slf-error-block [message]="store.usageError()!"
+                           (retry)="store.loadUsage()"
+                           (dismiss)="store.clearUsageError()" />
+        } @else {
+        <div class="grid g-4" style="gap:var(--s4);margin-bottom:var(--s5)">
+          @if (stats(); as s) {
+            <div>
+              <div class="eyebrow">{{ store.usageDays() }}-day total</div>
+              <div class="u-num fig-sm">{{ creditText(s.total) }}</div>
+              <div class="money" style="font-size:12.5px;margin-top:2px">{{ usd(s.total) }}</div>
+            </div>
+            <div>
+              <div class="eyebrow">Daily mean</div>
+              <div class="u-num fig-sm">{{ creditText(s.mean) }}</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">{{ usd(s.mean) }} per day</div>
+            </div>
+            <div>
+              <div class="eyebrow">Peak day</div>
+              <div class="u-num fig-sm">{{ creditText(s.peakValue) }}</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">{{ peakDateText() }}</div>
+            </div>
+            @if (requestStats(); as r) {
+              <div>
+                <div class="eyebrow">Requests</div>
+                <div class="u-num fig-sm">{{ num(r.total) }}</div>
+                <div class="muted" style="font-size:12.5px;margin-top:2px">{{ creditsPerRequest() === null ? '-' : creditText(creditsPerRequest()!) }} credits each, mean</div>
+              </div>
+            } @else {
+              <div>
+                <div class="eyebrow">Requests</div>
+                <div class="u-num fig-sm">-</div>
+                <div class="muted" style="font-size:12.5px;margin-top:2px">No requests in range</div>
+              </div>
+            }
+          } @else {
+            <div>
+              <div class="eyebrow">{{ store.usageDays() }}-day total</div>
+              <div class="u-num fig-sm">-</div>
+              <div class="money" style="font-size:12.5px;margin-top:2px">No usage in range</div>
+            </div>
+            <div>
+              <div class="eyebrow">Daily mean</div>
+              <div class="u-num fig-sm">-</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">No usage in range</div>
+            </div>
+            <div>
+              <div class="eyebrow">Peak day</div>
+              <div class="u-num fig-sm">-</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">No usage in range</div>
+            </div>
+            <div>
+              <div class="eyebrow">Requests</div>
+              <div class="u-num fig-sm">-</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">No usage in range</div>
+            </div>
+          }
+        </div>
+
+        @if (hasUsage()) {
+          <slf-empty-block title="No usage yet"
+                           detail="Requests appear here as soon as your API keys start calling the endpoint."
+                           icon="bars" />
+        } @else {
+          <slf-spend-chart [values]="daily()" [dayZero]="dayZero()" />
+
+          <div class="chart-legend">
+            <span><i style="background:var(--bar-1)"></i>Weekday</span>
+            <span><i style="background:var(--bar-2)"></i>Weekend</span>
+            <span><i style="background:var(--gold-fg);height:2px;border-radius:0"></i>{{ store.usageDays() }}-day mean</span>
+            <span class="muted">Last day is partial</span>
+          </div>
+        }
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Request log</h3>
+        <span class="spacer"></span>
+      </div>
+
+      <div class="log-filters" role="group" aria-label="Filter usage">
+        <div class="log-filter-duo">
+          <div class="log-filter-field">
+            <label class="log-filter-lbl" id="usageKeyLabel">Key</label>
+            <slf-search-select [options]="keyOptions()"
+                               [value]="store.usageKey()"
+                               [placeholder]="keyPlaceholder"
+                               labelledby="usageKeyLabel"
+                               (change)="onKeySelected($event)" />
+          </div>
+          <div class="log-filter-field">
+            <label class="log-filter-lbl" id="usageModelLabel">Model</label>
+            <slf-search-select [options]="modelOptions()"
+                               [value]="store.usageModel()"
+                               [placeholder]="modelPlaceholder"
+                               labelledby="usageModelLabel"
+                               (change)="onModelSelected($event)" />
+          </div>
+        </div>
+        <div class="log-filter-row log-filter-dates">
+          <label class="log-filter-lbl" for="usageFrom">From</label>
+          <input id="usageFrom" class="input" type="date"
+                 [value]="fromValue()" (change)="onFrom($event)" />
+          <label class="log-filter-lbl log-filter-lbl-2" for="usageTo">To</label>
+          <input id="usageTo" class="input" type="date"
+                 [value]="toValue()" (change)="onTo($event)" />
+        </div>
+      </div>
+
+      <div class="txn-filters txn-filters-log" role="group" aria-label="Filter usage status">
+        @for (f of filters; track f.key) {
+          <button
+            type="button"
+            class="txn-filter"
+            [class.is-active]="isActive(f.key)"
+            [attr.aria-current]="isActive(f.key) ? 'true' : null"
+            (click)="pickFilter(f.key)"
+          >{{ f.label }}</button>
+        }
+        @if (filtersActive()) {
+          <button type="button" class="btn btn-ghost btn-sm log-clear"
+                  (click)="clearFilters()">Clear filters</button>
+        }
+      </div>
+
+      @if (store.usageInitial()) {
+        <slf-skeleton rows="8" />
+      } @else if (store.usageError()) {
+        <slf-error-block [message]="store.usageError()!"
+                         (retry)="store.loadUsage()"
+                         (dismiss)="store.clearUsageError()" />
+      } @else if (store.filteredUsage().length > 0) {
+        <div class="table-wrap">
+          <table class="tbl stackable">
+            <thead>
+              <tr>
+                <th>Time</th><th>Key</th><th>Model</th>
+                <th class="num">Uncached input</th><th class="num">Cached input</th>
+                <th class="num">Output</th><th class="num">Credits</th><th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of store.filteredUsage(); track r.time) {
+                <tr class="is-clickable" tabindex="0"
+                    [attr.aria-expanded]="expandedRow() === r.id"
+                    (click)="toggleRow(r)"
+                    (keydown.enter)="toggleRow(r)" (keydown.space)="toggleRow(r); $event.preventDefault()">
+                  <td data-th="Time" class="u-mono">{{ localTime(r.time) }}</td>
+                  <td data-th="Key" class="u-mono">{{ r.key }}</td>
+                  <td data-th="Model" class="u-mono">{{ r.model }}</td>
+                  <td data-th="Uncached input" class="num" [class.muted]="r.prompt === null">{{ r.prompt === null ? '-' : num(r.prompt) }}</td>
+                  <td data-th="Cached input" class="num" [class.muted]="r.cached === null">{{ r.cached === null ? '-' : num(r.cached) }}</td>
+                  <td data-th="Output" class="num" [class.muted]="r.completion === null">{{ r.completion === null ? '-' : num(r.completion) }}</td>
+                  <td data-th="Credits" class="num" [class.strong]="r.error === null">{{ creditText(r.credits) }}</td>
+                  <td data-th="Result">
+                    @if (r.error) {
+                      <span class="pill pill-alert">{{ r.error }}</span>
+                    } @else {
+                      <span class="u-mono">{{ r.result }} · {{ humanDuration(r.latencyMs) }}</span>
+                      <button type="button" class="row-toggle"
+                              [attr.aria-expanded]="expandedRow() === r.id"
+                              [attr.aria-controls]="'usage-detail-' + r.id"
+                              aria-label="Settlement detail"
+                              (click)="toggleRow(r); $event.stopPropagation()">
+                        <slf-icon name="chevron" [width]="2"
+                                  [style.transform]="expandedRow() === r.id ? 'rotate(90deg)' : ''" />
+                      </button>
+                    }
+                  </td>
+                </tr>
+                @if (expandedRow() === r.id) {
+                  <tr class="usage-detail" id="usage-detail-{{ r.id }}">
+                    <td colspan="8" data-th="Settlement">
+                      @if (r.commitment) {
+                        <div class="usage-settlement">
+                        <div class="grid kv-list usage-commitment">
+                          <div class="kv"><span>Batch index</span><b>{{ r.commitment.batchIndex }}</b></div>
+                          <div class="kv"><span>Root</span>
+                            <b class="kv-value">
+                              <span class="u-mono">{{ short(r.commitment.root) }}</span>
+                              <slf-copy-button [value]="r.commitment.root" aria="Copy root" />
+                            </b>
+                          </div>
+                          <div class="kv"><span>Commit transaction</span>
+                            <b class="kv-value">
+                              <a class="xlink" [href]="solTxUrl(r.commitment.commitTx)"
+                                 target="_blank" rel="noopener" title="Solana explorer">
+                                <span class="u-mono">{{ short(r.commitment.commitTx) }}</span>
+                                <slf-icon name="external" [width]="2" />
+                              </a>
+                            </b>
+                          </div>
+                        </div>
+                        <div class="usage-settlement-side">
+                        <p class="muted usage-commitment-note">
+                          The on-chain root check is a manual step: open the commit
+                          transaction in the explorer and compare it with this root.
+                        </p>
+                        <div class="usage-verify">
+                          @if (proofCheck(r); as check) {
+                            @if (check.state === 'checking') {
+                              <span class="muted" style="font-size:12px">Checking proof</span>
+                            } @else if (check.state === 'verified') {
+                              <span class="pill pill-ok">Verified</span>
+                            } @else {
+                              <span class="pill pill-alert">{{ check.detail ?? 'Verification failed' }}</span>
+                            }
+                          }
+                          <button type="button" class="btn btn-secondary btn-sm"
+                                  [disabled]="proofCheck(r)?.state === 'checking'"
+                                  (click)="store.verifyProof(r)">Verify</button>
+                        </div>
+                        </div>
+                        </div>
+                      } @else {
+                        <p class="muted" style="font-size:12px;margin:0">
+                          Awaiting settlement. No commitment yet; the batch, root and
+                          commit transaction will show here when the charge settles.
+                        </p>
+                      }
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td data-th="" colspan="3">Totals · {{ store.usageTotals().count }} requests shown</td>
+                <td data-th="Uncached input" class="num">{{ num(store.usageTotals().prompt) }}</td>
+                <td data-th="Cached input" class="num">{{ num(store.usageTotals().cached) }}</td>
+                <td data-th="Output" class="num">{{ num(store.usageTotals().completion) }}</td>
+                <td data-th="Credits" class="num money">{{ creditText(store.usageTotals().credits) }}</td>
+                <td data-th="Result" class="u-mono">{{ usd(store.usageTotals().credits) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <nav class="pager" aria-label="Request log pages">
+          <button type="button" class="btn btn-secondary btn-sm pager-btn"
+                  [disabled]="!canPrev()" (click)="prevPage()">Prev</button>
+          <span class="pager-info u-mono">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button type="button" class="btn btn-secondary btn-sm pager-btn"
+                  [disabled]="!canNext()" (click)="nextPage()">Next</button>
+        </nav>
+      } @else if (filtersActive()) {
+        <slf-empty-block title="No matching requests"
+                         [detail]="'No requests match ' + activeFilterText() + '.'"
+                         icon="search" />
+      } @else {
+        <slf-empty-block title="No usage yet"
+                         detail="Requests appear here as soon as your API keys start calling the endpoint."
+                         icon="search" />
+      }
+
+      <div class="card-foot" style="display:flex;gap:12px;flex-wrap:wrap">
+        <span>{{ store.usageCountText() }} · {{ store.usageTotal() }} matching</span>
+        <span style="margin-left:auto">
+          Rejected requests are never charged. Cached input tokens are billed at
+          the cached rate and are not also counted as uncached input.
+        </span>
+      </div>
+    </div>
+
+  </div>
+</section>

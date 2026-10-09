@@ -1,0 +1,170 @@
+<section class="page">
+  <div class="page-head">
+    <h2>Sell credits</h2>
+    <p>
+      List credits on the market, priced in USDC. No account on the buyer's
+      side, no KYC. They pay your wallet directly and your credits move.
+    </p>
+  </div>
+
+  <div class="split" [class.cols-1]="bp() === 'mobile'">
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head">
+          <h3>List credits</h3><span class="spacer"></span>
+          <span class="eyebrow">{{ creditText(store.balance()) }} spendable · {{ creditText(store.locked()) }} locked</span>
+        </div>
+        <div class="card-body" style="display:grid;gap:var(--s4)">
+          <div class="field">
+            <label for="sellCredits">Credits to list</label>
+            <input class="input u-num" id="sellCredits" type="number"
+                   inputmode="numeric" min="1" step="1"
+                   [attr.max]="store.balance()"
+                   [value]="creditsInput()" (input)="onCredits($event)">
+            <span class="hint">
+              Whole credits, up to the {{ creditText(store.balance()) }} that are
+              spendable. Credits locked by open listings cannot be listed again.
+            </span>
+          </div>
+          <div class="field">
+            <label for="sellPrice">Price ({{ token() }})</label>
+            <input class="input u-num" id="sellPrice" type="number"
+                   inputmode="decimal" min="0.01" step="0.01"
+                   [value]="priceInput()" (input)="onPrice($event)">
+            <span class="hint">The whole-token amount a buyer pays for the listing.</span>
+          </div>
+          <div class="field">
+            <label>Pay token</label>
+            <div class="choice-grid" role="group" aria-label="Pay token">
+              @for (t of tokens; track t.symbol) {
+                <button class="choice" type="button"
+                        [attr.aria-pressed]="token() === t.symbol"
+                        (click)="pickToken(t.symbol)">
+                  <span class="big">{{ t.symbol }}</span>
+                  <span class="small">Solana · USDC</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>My listings</h3></div>
+        @if (store.listingsInitial()) {
+          <div class="card-body"><slf-skeleton rows="4" /></div>
+        } @else if (store.listingsError() === rejected) {
+          <div class="card-body">
+            <div class="notice notice-x" aria-live="polite">
+              <slf-icon name="info" [width]="1.8" />
+              <span>{{ store.listingsError() }}</span>
+              <button class="icon-btn state-close" type="button" aria-label="Dismiss"
+                      (click)="store.clearListingsError()">
+                <slf-icon name="close" />
+              </button>
+            </div>
+          </div>
+        } @else if (store.listingsError()) {
+          <div class="card-body">
+            <slf-error-block [message]="store.listingsError()!"
+                             (retry)="store.loadListings()"
+                             (dismiss)="store.clearListingsError()" />
+          </div>
+        } @else if (store.sellListings().length === 0) {
+          <div class="card-body">
+            <slf-empty-block title="No listings yet"
+                             detail="Listed credits appear here the moment the listing transaction is sent."
+                             icon="shield" />
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table class="tbl stackable">
+              <thead>
+                <tr>
+                  <th>State</th><th class="num">Credits</th><th class="num">Price</th>
+                  <th>Maturity</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (l of store.sellListings(); track l.id) {
+                  <tr>
+                    <td data-th="State">
+                      <span class="pill"
+                            [class.pill-ok]="l.state === 'open'"
+                            [class.pill-wait]="l.state === 'cancelled'"
+                            [class.pill-value]="l.state === 'sold'">
+                        {{ l.state }}
+                      </span>
+                    </td>
+                    <td data-th="Credits" class="num strong">{{ creditText(l.credits) }}</td>
+                    <td data-th="Price" class="num">{{ listingPriceCell(l) }}</td>
+                    <td data-th="Maturity">{{ l.matured ? 'Matured' : 'Maturing' }}</td>
+                    <td data-th="" class="num">
+                      @if (l.state === 'open' && store.pendingListingId() !== l.id) {
+                        <button class="btn btn-ghost btn-sm" type="button"
+                                [disabled]="sell.busy()"
+                                (click)="cancel(l)">{{ sell.busy() ? 'Cancelling...' : 'Cancel' }}</button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Review</h3></div>
+      <div class="card-body">
+        <div class="kv-list">
+          <div class="kv"><span>Credits listed</span><b>{{ creditText(credits()) }}</b></div>
+          <div class="kv"><span>Price</span><b>{{ dec2(price()) }} {{ token() }}</b></div>
+          <div class="kv"><span>Spendable after</span><b>{{ creditText(spendableAfter()) }} credits</b></div>
+        </div>
+
+        <div class="notice" style="margin-top:var(--s4)">
+          <slf-icon name="info" [width]="1.8" />
+          <span>
+            Listing locks these credits right away. They unlock only when
+            you cancel, and they transfer to the buyer the moment a sale
+            lands after the maturation window. Your balance shows them as
+            locked, not as gone.
+          </span>
+        </div>
+
+        @if (!canList()) {
+          <p class="muted" style="font-size:12.5px;margin-top:var(--s4);line-height:1.6">{{ refusalReason() }}</p>
+        }
+
+        @if (sell.error() === rejected) {
+          <div class="notice notice-x" style="margin-top:var(--s4)" aria-live="polite">
+            <slf-icon name="info" [width]="1.8" />
+            <span>{{ sell.error() }}</span>
+            <button class="icon-btn state-close" type="button" aria-label="Dismiss"
+                    (click)="sell.dismissError()">
+              <slf-icon name="close" />
+            </button>
+          </div>
+        } @else if (sell.error()) {
+          <slf-error-block [message]="sell.error()!" (retry)="doList()"
+                           (dismiss)="sell.dismissError()"
+                           style="margin-top:var(--s4)" />
+        }
+
+        <button class="btn btn-primary btn-block" type="button"
+                style="margin-top:var(--s4)"
+                [disabled]="!canList() || sell.busy()" (click)="doList()">
+          {{ sell.busy() ? 'Creating listing...' : (credits() > 0 ? 'List ' + creditText(credits()) + ' credits' : 'List credits') }}
+        </button>
+        <p class="muted" style="font-size:12.5px;margin-top:12px;line-height:1.6">
+          Listing runs over your session - no wallet signature. Your credits
+          lock the moment the listing opens.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

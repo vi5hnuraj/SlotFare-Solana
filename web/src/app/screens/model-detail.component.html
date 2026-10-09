@@ -1,0 +1,138 @@
+<section class="page">
+  @if (store.modelsInitial()) {
+    <div class="card"><div class="card-body"><slf-skeleton rows="4" /></div></div>
+  } @else if (store.modelsError()) {
+    <div class="card">
+      <div class="card-body">
+        <slf-error-block [message]="store.modelsError()!" (retry)="store.loadModels()"
+                         (dismiss)="store.clearModelsError()" />
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <div class="card">
+      <div class="card-body">
+        <slf-empty-block title="Unknown model" detail="{{ modelId() }}" icon="cube" />
+        <p style="margin-top:var(--s3)">
+          <a class="xlink" routerLink="/models">Back to models</a>
+        </p>
+      </div>
+    </div>
+  } @else if (model()) {
+    <a class="xlink model-detail-back" routerLink="/models" style="display:inline-flex;margin-bottom:var(--s3)">
+      <slf-icon name="chevron" [width]="2" style="transform:rotate(180deg)" /> Models
+    </a>
+    <div class="page-head model-detail-head">
+      <span class="model-logo model-logo-lg">
+        @if (vendorLogo(model()!.vendor)) {
+          <img class="model-logo-img" [src]="vendorLogo(model()!.vendor)" [alt]="vendorName(model()!.vendor)" />
+        } @else {
+          <span class="avatar">{{ (model()!.name.charAt(0) || '?').toUpperCase() }}</span>
+        }
+      </span>
+      <div class="model-detail-head-text">
+        @if (model()!.vendor !== undefined) {
+          <span class="eyebrow">{{ vendorName(model()!.vendor) }}</span>
+        }
+        <h2>{{ model()!.name }}</h2>
+        @if (model()!.description !== undefined) {
+          <p>{{ model()!.description }}</p>
+        }
+        <div class="model-detail-id">
+          <span class="u-mono">{{ model()!.id }}</span>
+          <slf-copy-button [value]="model()!.id" aria="Copy model id" />
+          <span class="cap-badge">{{ kindLabel() }}</span>
+          @if (servingPathBadged()) {
+            <span class="model-badge">{{ servingPathLabel() }}</span>
+          } @else {
+            <span class="cap-badge">{{ servingPathLabel() }}</span>
+          }
+          @if (model()!.capabilities !== undefined) {
+            @for (c of model()!.capabilities; track c) {
+              <span class="cap-badge">{{ capLabel(c) }}</span>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="model-detail">
+      <div class="split model-detail-facts" [class.cols-1]="bp() !== 'desktop'">
+        <div class="card">
+          <div class="card-head"><h3>Details</h3><span class="spacer"></span></div>
+          <div class="card-body">
+            <div class="kv-list">
+              <div class="kv"><span>Kind</span><b>{{ kindLabel() }}</b></div>
+              <div class="kv"><span>Serving path</span><b>{{ servingPathLabel() }}</b></div>
+              @if (model()!.contextLength !== undefined) {
+                <div class="kv"><span>Context window</span><b>{{ contextShort(model()!.contextLength!) }}</b></div>
+              }
+              @if (model()!.moe !== undefined) {
+                <div class="kv"><span>Mixture of experts</span><b>{{ model()!.moe ? 'Yes' : 'No' }}</b></div>
+              }
+              @if (model()!.parameters !== undefined) {
+                <div class="kv"><span>Parameters</span><b>{{ model()!.parameters }}</b></div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Pricing</h3><span class="spacer"></span>
+            <span class="eyebrow">per 1M tokens</span>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl stackable">
+              <thead>
+                <tr><th>Token class</th><th class="num">Credits</th></tr>
+              </thead>
+              <tbody>
+                @for (p of pricingRows(); track p.klass) {
+                  <tr>
+                    <td data-th="Token class">{{ p.klass }}</td>
+                    <td data-th="Credits" class="num">{{ p.credits }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Example</h3><span class="spacer"></span>
+        </div>
+        <div class="card-body">
+          @if (rpcExample()) {
+            <p class="muted" style="font-size:12.5px">
+              Inference isn't configured on this deployment. The catalog and
+              pricing are live, but model calls are disabled. Meter a real
+              request from
+              <a class="xlink" routerLink="/keys">the API keys screen</a>.
+            </p>
+          } @else {
+            <div class="field" style="margin-bottom:var(--s3)">
+              <label class="lbl">Base URL</label>
+              <div class="copy-row">
+                <div class="copy-field u-mono">{{ baseUrl() }}</div>
+                <slf-copy-button [value]="baseUrl()" aria="Copy base URL" />
+              </div>
+            </div>
+            <div class="copy-row">
+              <div class="well" style="padding:var(--s4)">
+                <pre class="code">{{ curl() }}</pre>
+              </div>
+              <slf-copy-button [value]="curl()" aria="Copy curl example" />
+            </div>
+            <p class="muted" style="font-size:12.5px;margin-top:10px">
+              One-time setup:
+              <span class="u-mono">export SLOTFARE_API_KEY=attk_...</span> with a key from
+              <a class="xlink" routerLink="/keys">the API keys screen</a>.
+            </p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

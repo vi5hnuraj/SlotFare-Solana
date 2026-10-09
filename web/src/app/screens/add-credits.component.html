@@ -1,0 +1,148 @@
+<section class="page">
+  <div class="page-head">
+    <h2>Add credits</h2>
+    <p>
+      Pay USDC on Solana. The watcher sees the transfer on chain, confirms it,
+      and mints credits to your account. No invoice, no card, no receipt to file.
+    </p>
+  </div>
+
+  <div class="split" [class.cols-1]="bp() === 'mobile'">
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Amount</h3><span class="spacer"></span>
+          <span class="eyebrow">1,000 credits = $1.00</span>
+        </div>
+        <div class="card-body" style="display:grid;gap:var(--s4)">
+          <div class="choice-grid" role="group" aria-label="Preset amounts">
+            @for (p of presets; track p) {
+              <button class="choice" type="button"
+                      [attr.aria-pressed]="store.amount() === p"
+                      (click)="onPreset(p)">
+                <span class="big">${{ p }}</span>
+                <span class="small">{{ creditText(p * 1000) }} credits</span>
+              </button>
+            }
+          </div>
+          <div class="field">
+            <label for="customAmount">Custom amount (USD)</label>
+            <input class="input u-num" id="customAmount" type="number"
+                   inputmode="decimal" min="5" max="50000" step="1"
+                   [value]="store.amount()" (input)="onCustomAmount($event)">
+            <span class="hint">
+              Minimum $5. Maximum $50,000 per transfer. Credits mint at
+              1,000 per dollar, settled at 6-decimal USDC precision.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Pay with</h3><span class="spacer"></span>
+          <span class="eyebrow">{{ target()?.cluster ?? 'Solana' }} · USDC</span>
+        </div>
+        <div class="card-body" style="display:grid;gap:var(--s4)">
+          @if (target() === null) {
+            <slf-empty-block title="Deposits not configured"
+                             detail="This deployment serves no deposit target yet. The pay button stays disabled until one is configured."
+                             icon="info" />
+          } @else {
+            <div class="choice-grid" role="group" aria-label="Payment token" style="grid-template-columns:1fr">
+              <button class="choice" type="button" aria-pressed="true">
+                <span class="big">USDC</span>
+                <span class="small">Transferred from your wallet to the Slotfare treasury</span>
+              </button>
+            </div>
+            <div class="kv-list">
+              <div class="kv"><span>Mint</span><b>{{ shortAddress(target()!.mint) }}</b></div>
+              <div class="kv">
+                <span>Treasury</span>
+                @if (treasuryHref() !== '') {
+                  <b><a [href]="treasuryHref()" target="_blank" rel="noopener">
+                    {{ shortAddress(target()!.treasury) }}
+                  </a></b>
+                } @else {
+                  <b>{{ shortAddress(target()!.treasury) }}</b>
+                }
+              </div>
+            </div>
+            <p class="hint">
+              Same token, same chain as every other Slotfare deposit: the
+              watcher keys on the treasury token account, so your transfer is
+              the credit event itself.
+            </p>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Review</h3></div>
+      <div class="card-body">
+        <div class="kv-list">
+          <div class="kv"><span>You pay</span><b>{{ store.payText() }}</b></div>
+          <div class="kv"><span>Rate</span><b>1,000 credits / $1.00</b></div>
+          <div class="kv"><span>Credits minted</span>
+            <b>{{ creditText(store.creditsToBuy()) }}</b>
+          </div>
+          <div class="kv"><span>New balance</span>
+            @if (store.balanceInitial()) {
+              <slf-skeleton rows="1" />
+            } @else {
+              <b>{{ creditText1(newBalance()) }} credits</b>
+            }
+          </div>
+        </div>
+
+        @if (store.balanceError()) {
+          <slf-error-block [message]="store.balanceError()!"
+                           (retry)="store.loadAccount()"
+                           (dismiss)="store.clearBalanceError()"
+                           style="margin-top:var(--s4)" />
+        }
+
+        <div class="notice" style="margin-top:var(--s4)">
+          <slf-icon name="info" [width]="1.8" />
+          <span>
+            One prompt: confirm the USDC transfer in your wallet. The amount
+            above leaves your wallet; the credits appear once the watcher
+            records the transfer.
+          </span>
+        </div>
+
+        @if (error() === rejected) {
+          <div class="notice notice-x" style="margin-top:var(--s4)" aria-live="polite">
+            <slf-icon name="info" [width]="1.8" />
+            <span>{{ error() }}</span>
+            <button class="icon-btn state-close" type="button" aria-label="Dismiss"
+                    (click)="deposit.dismissError()">
+              <slf-icon name="close" />
+            </button>
+          </div>
+        } @else if (error()) {
+          <slf-error-block [message]="error()!" (retry)="pay()"
+                           (dismiss)="deposit.dismissError()"
+                           style="margin-top:var(--s4)" />
+        }
+
+        <button class="btn btn-primary btn-block" type="button"
+                style="margin-top:var(--s4)"
+                [disabled]="!payEnabled()" (click)="pay()">
+          {{ payLabel() }}
+        </button>
+        @if (payDisabledReason()) {
+          <p class="hint" style="margin-top:var(--s2)">{{ payDisabledReason() }}</p>
+        }
+        <p class="muted" style="font-size:12.5px;margin-top:12px;line-height:1.6">
+          Credits arrive once the transfer confirms and the watcher records it -
+          typically under a minute. You can close this page; the trace keeps
+          running.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

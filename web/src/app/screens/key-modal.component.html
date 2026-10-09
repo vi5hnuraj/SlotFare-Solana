@@ -1,0 +1,63 @@
+@if (open()) {
+  <div class="modal-scrim" role="dialog" aria-modal="true"
+       aria-labelledby="keyModalTitle" tabindex="-1"
+       (click)="onScrimClick($event)" (keydown)="onKeydown($event)">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="keyModalTitle">Create API key</h3>
+        <span class="spacer" style="margin-left:auto"></span>
+        <button class="icon-btn" type="button" (click)="close()" aria-label="Close">
+          <slf-icon name="close" [width]="2" />
+        </button>
+      </div>
+
+      @if (!revealed()) {
+        <div class="modal-body">
+          <div class="field">
+            <label for="keyName">Label</label>
+            <input class="input" id="keyName" type="text" placeholder="prod-router"
+                   maxlength="40" [value]="label()" (input)="onLabel($event)">
+            <span class="hint">
+              For your own bookkeeping only. It appears in the usage log next to
+              each request.
+            </span>
+            @if (createError()) {
+              <p class="hint" style="color:var(--gold-fg)">{{ createError() }}</p>
+            }
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-secondary" type="button" (click)="close()">Cancel</button>
+          <button class="btn btn-primary" type="button" [disabled]="creating()"
+                  (click)="create()">{{ creating() ? 'Creating…' : 'Create key' }}</button>
+        </div>
+      } @else {
+        <div class="modal-body">
+          <div class="reveal">
+            <div class="eyebrow" style="color:var(--gold-fg)">Shown once. Copy it now</div>
+            <div class="key">{{ plaintext() }}</div>
+            <div class="copy-row">
+              <slf-copy-button [value]="plaintext()" label="Copy key" aria="Copy API key" />
+              <span class="muted" style="font-size:12.5px">
+                Label: <b style="color:var(--fg)">{{ label() }}</b>
+              </span>
+            </div>
+          </div>
+          <p class="muted" style="font-size:13px;margin-top:var(--s4);line-height:1.6">
+            Slotfare keeps the prefix <span class="u-mono">{{ prefix() }}</span> and a
+            hash of the rest. Closing this dialog discards the plaintext. If you
+            lose it, revoke the key and create another.
+          </p>
+          <label class="check-row">
+            <input type="checkbox" [checked]="stored()" (change)="onStored($event)">
+            <span>I have stored this key somewhere safe.</span>
+          </label>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-primary" type="button" [disabled]="!stored()"
+                  (click)="done()">Done</button>
+        </div>
+      }
+    </div>
+  </div>
+}

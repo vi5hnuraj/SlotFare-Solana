@@ -1,0 +1,99 @@
+<section class="page">
+  <a class="xlink" routerLink="/funding" style="display:inline-flex;margin-bottom:var(--s3)">
+    <slf-icon name="chevron" [width]="2" style="transform:rotate(180deg)" /> All transactions
+  </a>
+  <div class="page-head">
+    <h2>Trade detail</h2>
+    <p>
+      A finished trade, as the market settled it. Every fact below is a
+      verifiable on-chain move on Solana. Follow any of them to a block
+      explorer.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Trade</h3>
+      <span class="spacer"></span>
+      @if (listing(); as l) {
+        <span class="pill" [class.pill-ok]="l.state === 'sold'"
+              [class.pill-wait]="l.state === 'cancelled'">
+          {{ statusLabel(l) }}
+        </span>
+        <span class="eyebrow" style="margin-left:10px">Listing {{ l.id }}</span>
+      }
+    </div>
+
+    @if (store.listingsInitial()) {
+      <slf-skeleton rows="6" />
+    } @else if (notFound()) {
+      <slf-empty-block title="Listing not found"
+                       detail="No listing with this id belongs to the connected account."
+                       icon="route" />
+      <a class="btn btn-secondary btn-block" routerLink="/funding"
+         style="margin-top:var(--s4)">All transactions</a>
+    } @else if (listing(); as l) {
+      <div class="card-body">
+        <div class="step-meta">
+          <div><span>Credits</span><b>{{ credits(l) }}</b></div>
+          <div><span>Price</span><b>{{ price(l) }}</b></div>
+          <div><span>Listed at</span><b>{{ localTime(l.createdAt) }}</b></div>
+        </div>
+
+        <div class="kv-list" style="margin-top:var(--s3)">
+          <div class="kv"><span>Listing transaction</span><b>{{ short(l.listedTx) }}</b></div>
+          <div class="kv"><span>Slot</span><b>{{ blockText(l.listedBlock) }}</b></div>
+          <div class="kv"><span>Matured</span><b>{{ l.matured ? 'Yes' : 'No' }}</b></div>
+          @if (maturityDeadline(l) !== '-') {
+            <div class="kv"><span>Maturation deadline</span><b>{{ maturityDeadline(l) }}</b></div>
+          }
+          @if (saleTx(l); as s) {
+            <div class="kv"><span>{{ tradeWord(l) }} transaction</span><b>{{ short(s.hash) }}</b></div>
+            <div class="kv"><span>{{ tradeWord(l) }} slot</span><b>{{ blockText(s.block ?? undefined) }}</b></div>
+            <div class="kv"><span>{{ completedAtLabel(l) }}</span><b>{{ localTime(s.at) }}</b></div>
+          }
+          @if (cancelTx(l); as c) {
+            <div class="kv"><span>Cancel transaction</span><b>{{ short(c.hash) }}</b></div>
+            <div class="kv"><span>Cancel slot</span><b>{{ blockText(c.block ?? undefined) }}</b></div>
+            <div class="kv"><span>Cancelled at</span><b>{{ localTime(c.at) }}</b></div>
+          }
+          <div class="kv"><span>Outcome</span><b>{{ outcome(l) }}</b></div>
+        </div>
+
+        <div class="step-actions" style="margin-top:var(--s3)">
+          @if (listingTx(l).href) {
+            <a class="xlink" [href]="listingTx(l).href" target="_blank" rel="noopener">
+              Solana explorer · listing
+              <slf-icon name="external" [width]="2" />
+            </a>
+          }
+        </div>
+        <div class="step-actions" style="margin-top:8px">
+          @if (saleTx(l)?.href) {
+            <a class="xlink" [href]="saleTx(l)!.href" target="_blank" rel="noopener">
+              Solana explorer · purchase
+              <slf-icon name="external" [width]="2" />
+            </a>
+          }
+        </div>
+        <div class="step-actions" style="margin-top:8px">
+          @if (cancelTx(l)?.href) {
+            <a class="xlink" [href]="cancelTx(l)!.href" target="_blank" rel="noopener">
+              Solana explorer · cancellation
+              <slf-icon name="external" [width]="2" />
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="notice" style="margin:var(--s3) 0 0">
+        <slf-icon name="shield" [width]="1.8" />
+        <span>
+          <b>Public and verifiable.</b> The listing, maturation and settlement
+          transactions are all public on Solana and verify this trade end
+          to end.
+        </span>
+      </div>
+    }
+  </div>
+</section>

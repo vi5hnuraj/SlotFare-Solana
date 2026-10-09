@@ -1,0 +1,115 @@
+<section class="page">
+  <div class="page-head">
+    <h2>API keys</h2>
+    <p>
+      A key is shown once, at creation. Slotfare stores only its prefix and a
+      hash. A lost key cannot be recovered, only revoked and replaced.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Keys</h3>
+      <span class="spacer"></span>
+      <button class="btn btn-primary btn-sm" type="button" (click)="create()">
+        <slf-icon name="plus" [width]="2" />
+        Create key
+      </button>
+    </div>
+    @if (store.keysInitial()) {
+      <slf-skeleton rows="4" />
+    } @else if (store.keysError()) {
+      <slf-error-block [message]="store.keysError()!"
+                       (retry)="store.loadKeys()"
+                       (dismiss)="store.clearKeysError()" />
+    } @else if (store.keys().length === 0) {
+      <slf-empty-block title="No API keys yet"
+                       detail="Create a key when you need one. It is shown once and never expires on its own."
+                       icon="key" />
+    } @else {
+      <div class="table-wrap">
+        <table class="tbl stackable">
+          <thead>
+            <tr>
+              <th>Key</th><th>Label</th><th>Created</th><th>Last used</th>
+              <th class="num">Requests</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (k of store.keys(); track k.id) {
+              <tr>
+                <td data-th="Key"><span class="u-mono">{{ k.display }}</span></td>
+                <td data-th="Label">{{ k.label }}</td>
+                <td data-th="Created" class="u-mono">{{ localTime(k.created) }}</td>
+                <td data-th="Last used" [class.muted]="k.lastUsedAt === null">{{ relTime(k.lastUsedAt) }}</td>
+                <td data-th="Requests" class="num">{{ num(k.requests) }}</td>
+                <td data-th="Status">
+                  @if (k.revoked) {
+                    <span class="pill pill-revoked">Revoked</span>
+                  } @else {
+                    <span class="pill pill-ok">Active</span>
+                  }
+                </td>
+                <td data-th="" style="text-align:right">
+                  @if (!k.revoked) {
+                    <button class="btn btn-ghost btn-sm" type="button"
+                            (click)="revoke(k.id)">Revoke</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="card-foot">
+        Revoking is immediate. In-flight requests finish; the next one returns
+        <span class="u-mono">401 invalid_key</span>.
+      </div>
+    }
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>First request</h3>
+      <span class="spacer"></span>
+    </div>
+    <div class="card-body" style="display:grid;gap:var(--s4)">
+      <div class="field">
+        <span class="lbl">Base URL</span>
+        <div class="copy-row">
+          <span class="copy-field">{{ exampleBase() }}</span>
+          <slf-copy-button [value]="exampleBase()" aria="Copy base URL" />
+        </div>
+      </div>
+      <div class="copy-row">
+        <div class="well" style="padding:var(--s4)">
+          <pre class="code">{{ curl() }}</pre>
+        </div>
+        <slf-copy-button [value]="curl()" aria="Copy curl example" />
+      </div>
+      @if (rpcExample()) {
+        <p class="muted" style="font-size:12.5px;margin-top:0">
+          Inference isn't configured on this deployment. This example makes a
+          metered Devnet RPC call through <span class="u-mono">/rpc</span>.
+        </p>
+      }
+      @if (store.modelsError()) {
+        <p class="muted" style="font-size:12.5px;margin-top:0">
+          Showing a placeholder model id while the catalog is unavailable.
+        </p>
+      }
+      <p class="muted" style="font-size:12.5px;margin-top:0">
+        One-time setup:
+        <span class="u-mono">export SLOTFARE_API_KEY=attk_...</span> with one of your keys.
+      </p>
+      <p class="muted" style="font-size:12.5px;margin-top:8px">
+        Responses carry <span class="u-mono">x-slotfare-credits-charged</span> and
+        <span class="u-mono">x-slotfare-balance</span> headers, both in micro-credits
+        (10,000 = 1 credit), so your client can meter without a second call.
+        Streamed responses omit the charge header.
+      </p>
+    </div>
+  </div>
+</section>
+
+<slf-key-modal />

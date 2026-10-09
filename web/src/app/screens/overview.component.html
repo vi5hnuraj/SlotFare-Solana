@@ -1,0 +1,283 @@
+<section class="page">
+  <slf-inference-notice />
+  <div class="split" [class.cols-1]="bp() === 'mobile'">
+    <div class="grid">
+
+      <div class="card">
+        <div class="hero-balance">
+          @if (store.balanceInitial()) {
+            <slf-skeleton rows="3" />
+          } @else {
+            <div class="eyebrow">Credit balance</div>
+            <div class="figure">
+              <span>{{ store.balanceText() }}</span><span class="unit">credits</span>
+            </div>
+            <div class="usd">{{ store.balanceUsd() }}</div>
+            @if (store.locked() > 0) {
+              <div class="lock-line">
+                {{ store.lockedText() }} credits locked by open sell listings
+              </div>
+            }
+            @if (store.balanceError()) {
+              <slf-error-block [message]="store.balanceError()!"
+                               (retry)="store.loadAccount()"
+                               (dismiss)="store.clearBalanceError()" />
+            }
+          }
+        </div>
+        <div class="grid g-3" style="gap:0;border-top:1px solid var(--line-0)">
+          <div class="stat" style="border-right:1px solid var(--line-0)">
+            <div class="eyebrow">Spent · last 24 h</div>
+            <div class="val">{{ creditText(store.spend24h()) }}</div>
+            <div class="sub"><span class="u-num">{{ usd(store.spend24h()) }}</span> · {{ creditText(store.creditsPerHour()) }} credits/hour</div>
+          </div>
+          @if (store.burn7d(); as burn) {
+            <div class="stat" style="border-right:1px solid var(--line-0)">
+              <div class="eyebrow">Burn rate · 7 day avg</div>
+              <div class="val">{{ creditText(burn) }}</div>
+              <div class="sub">credits per day · <span class="u-num">{{ usd(burn) }}</span></div>
+            </div>
+          } @else {
+            <div class="stat" style="border-right:1px solid var(--line-0)">
+              <div class="eyebrow">Burn rate · 7 day avg</div>
+              <div class="val">-</div>
+              <div class="sub">Not enough usage yet</div>
+            </div>
+          }
+          @if (store.runwayDays(); as r) {
+            <div class="stat">
+              <div class="eyebrow">Runway</div>
+              <div class="val">{{ r.toFixed(1) }} <span style="font-size:15px;font-weight:500;color:var(--fg-3)">days</span></div>
+              <div class="sub">empty around {{ store.emptyDateText() }} at this rate</div>
+            </div>
+          } @else {
+            <div class="stat">
+              <div class="eyebrow">Runway</div>
+              <div class="val">-</div>
+              <div class="sub">Not enough usage yet</div>
+            </div>
+          }
+        </div>
+        <div class="card-foot" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <a class="btn btn-secondary" routerLink="/keys">New API key</a>
+          <span style="margin-left:auto">Rate 1,000 credits = $1.00</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Recent requests</h3>
+          <span class="spacer"></span>
+          <a class="btn btn-ghost btn-sm" routerLink="/usage">Full usage log →</a>
+        </div>
+        @if (store.usageInitial()) {
+          <slf-skeleton rows="5" />
+        } @else if (store.usageError()) {
+          <slf-error-block [message]="store.usageError()!"
+                           (retry)="store.loadUsage()"
+                           (dismiss)="store.clearUsageError()" />
+        } @else if (store.usageEmpty()) {
+          <slf-empty-block title="No requests yet"
+                           detail="Requests appear here as soon as your API keys start calling the endpoint."
+                           icon="search" />
+        } @else {
+          <div class="table-wrap">
+            <table class="tbl stackable">
+              <thead>
+                <tr>
+                  <th>Time</th><th>Key</th><th class="num">Uncached input</th>
+                  <th class="num">Cached input</th><th class="num">Output</th>
+                  <th class="num">Credits</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of recent(); track r.time) {
+                  <tr>
+                    <td data-th="Time" class="u-mono u-nowrap">{{ localTime(r.time) }}</td>
+                    <td data-th="Key" class="u-mono">{{ r.key }}</td>
+                    <td data-th="Uncached input" class="num">{{ r.prompt === null ? '-' : num(r.prompt) }}</td>
+                    <td data-th="Cached input" class="num">{{ r.cached === null ? '-' : num(r.cached) }}</td>
+                    <td data-th="Output" class="num">{{ r.completion === null ? '-' : num(r.completion) }}</td>
+                    <td data-th="Credits" class="num strong">{{ creditText(r.credits) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <div class="grid">
+
+      @if (store.locked() > 0) {
+        <div class="card">
+          <div class="card-head">
+            <h3>Credits locked</h3><span class="spacer"></span>
+            <span class="pill pill-value">locked</span>
+          </div>
+          <div class="card-body" style="display:grid;gap:12px">
+            <div class="stat" style="padding:0">
+              <div class="eyebrow">Locked</div>
+              <div class="val">{{ creditText1(store.locked()) }}</div>
+              <div class="sub"><span class="u-num">{{ usd(store.locked()) }}</span> · held by {{ store.openListingsCount() }} open sell order{{ store.openListingsCount() === 1 ? '' : 's' }}</div>
+            </div>
+            <a class="btn btn-secondary btn-block" routerLink="/sell">Manage listings</a>
+          </div>
+        </div>
+      }
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Funding in progress</h3>
+          <span class="spacer"></span>
+          @if (store.fundingStatus() !== null) {
+            @if (store.purchase().chainName) {
+              <span class="chain-badge">{{ store.purchase().chainName }}</span>
+            }
+            <span class="pill" [class.pill-ok]="store.traceComplete()"
+                  [class.pill-live]="!store.traceComplete()">
+              {{ store.traceComplete() ? 'Settled' : 'Proving' }}
+            </span>
+          }
+        </div>
+        @if (store.fundingInitial()) {
+          <slf-skeleton rows="3" />
+        } @else if (store.fundingError()) {
+          <slf-error-block [message]="store.fundingError()!"
+                           (retry)="store.startPolling()"
+                           (dismiss)="store.clearFundingError()" />
+        } @else if (store.fundingStatus() === null) {
+          <div class="card-body funding-empty">
+            <slf-empty-block
+                title="No funding in progress"
+                detail="Deposit USDC to the treasury account. Credits appear here the moment the transfer is seen."
+                icon="route" />
+          </div>
+        } @else {
+          <div class="card-body" style="padding-top:var(--s4)">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div class="u-num fig-sm">
+              {{ creditText(store.purchase().credits) }}
+              <span style="font-size:12px;font-weight:500;color:var(--fg-3)">credits</span>
+            </div>
+            <div class="u-mono" style="font-size:12px;color:var(--fg-3)">
+              {{ store.purchase().amount.toFixed(2) }} {{ store.purchase().token }}
+            </div>
+          </div>
+          <div class="trace-steps-bar" style="margin-top:12px">
+            @for (s of store.segments(); track $index) {
+              <i [class.done]="s.state === 'done'" [class.live]="s.state === 'live'"
+                 [style.--p.%]="s.percent"></i>
+            }
+          </div>
+          <p class="muted" style="font-size:12.5px;margin-top:10px">{{ store.traceNoteText() }}</p>
+          <a class="btn btn-secondary btn-block"
+             [routerLink]="store.purchaseId() !== null ? ['/funding', store.purchaseId()] : ['/funding']"
+             style="margin-top:var(--s4)">Watch the trace</a>
+          </div>
+        }
+      </div>
+
+      <!-- Attestation health: one row per source chain. The grade pill's
+           thresholds are display judgment, not protocol claims (see
+           core/attestation-health.ts). Hidden entirely when the wire
+           reports no attested source chains (this single-chain deployment). -->
+      @if (store.attestationInitial()) {
+        <div class="card">
+          <div class="card-head">
+            <h3>Attestation</h3>
+          </div>
+          <slf-skeleton rows="2" />
+        </div>
+      } @else if (store.attestationError()) {
+        <div class="card">
+          <div class="card-head">
+            <h3>Attestation</h3>
+          </div>
+          <div class="card-body">
+            <slf-error-block [message]="store.attestationError()!"
+                             (retry)="store.loadAttestation()"
+                             (dismiss)="store.clearAttestationError()" />
+          </div>
+        </div>
+      } @else if (store.attestation().length === 0) {
+        <!-- No source chains: the card is absent. -->
+      } @else {
+        <div class="card">
+          <div class="card-head">
+            <h3>Attestation</h3><span class="spacer"></span>
+            <span class="eyebrow">{{ store.attestation().length }} source chain{{ store.attestation().length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="card-body" style="display:grid;gap:10px;font-size:13px">
+            @for (r of attestRows(); track r.chainKey) {
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                <div>
+                  <strong>{{ r.name }}</strong>
+                  <div class="muted" style="font-size:12px">tip {{ r.tipText }}</div>
+                </div>
+                <span class="pill" [ngClass]="r.pillClass">{{ r.lagText }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (store.buyCard(); as b) {
+        <div class="card">
+          <div class="card-head">
+            <h3>Buy in progress</h3>
+            <span class="spacer"></span>
+            <span class="pill" [class.pill-ok]="b.complete"
+                  [class.pill-live]="!b.complete">
+              {{ b.complete ? 'Credited' : 'Crediting' }}
+            </span>
+          </div>
+          <div class="card-body" style="padding-top:var(--s4)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+              <div class="u-num fig-sm">
+                {{ creditText(b.credits) }}
+                <span style="font-size:12px;font-weight:500;color:var(--fg-3)">credits</span>
+              </div>
+              <div class="u-mono" style="font-size:12px;color:var(--fg-3)">
+                {{ b.priceText }}
+              </div>
+            </div>
+            <p class="muted" style="font-size:12.5px;margin-top:10px">{{ b.note }}</p>
+            <a class="btn btn-secondary btn-block" [href]="b.href"
+               target="_blank" rel="noreferrer" style="margin-top:var(--s4)">{{ b.label }}</a>
+          </div>
+        </div>
+      }
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Active keys</h3><span class="spacer"></span>
+          <span class="eyebrow">{{ store.activeKeys().length }}</span>
+        </div>
+        <div class="card-body" style="display:grid;gap:10px;font-size:13px">
+          @if (store.keysInitial()) {
+            <slf-skeleton rows="3" />
+          } @else if (store.keysError()) {
+            <slf-error-block [message]="store.keysError()!"
+                             (retry)="store.loadKeys()"
+                             (dismiss)="store.clearKeysError()" />
+          } @else if (store.activeKeys().length === 0) {
+            <slf-empty-block title="No active keys"
+                             detail="Create a key when you need one. It never expires on its own."
+                             icon="key" />
+          } @else {
+            @for (k of store.activeKeys(); track k.id) {
+              <div style="display:flex;justify-content:space-between;gap:12px">
+                <span class="u-mono">{{ k.display }}</span>
+                <span class="muted">{{ relTime(k.lastUsedAt) }}</span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

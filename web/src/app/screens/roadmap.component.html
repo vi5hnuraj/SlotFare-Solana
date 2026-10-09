@@ -1,0 +1,212 @@
+<slf-fireworks />
+<div class="rm-wrap">
+  <header class="rm-bar">
+    <a class="rm-brand" routerLink="/connect" aria-label="Slotfare console">
+      <img src="slotfare-logo.svg" alt="" width="28" height="28">
+      <span class="wordmark"><span class="f">Slot</span><span class="b">fare</span></span>
+    </a>
+    <div class="rm-bar-right">
+      <a class="btn btn-secondary" routerLink="/connect">Open the testnet console</a>
+      <button class="icon-btn" type="button" (click)="theme.toggle()"
+              [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <slf-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+    </div>
+  </header>
+
+  <main class="rm-main">
+
+    <!-- hero ------------------------------------------------------------- -->
+    <section class="rm-hero">
+      <h1>What&rsquo;s next for Slotfare</h1>
+      <p class="rm-lede">
+        The credit and attestation layer is live on testnet, with metered
+        inference on top as the thing anyone can touch. The product that
+        layer was built to carry is an <b>escrowed lease of a whole machine</b>,
+        settled by the chain. That is not built yet. This is the road to it,
+        and the conditions under which the result deserves real money.
+      </p>
+      <div class="rm-cta">
+        <a class="btn btn-primary" href="#phases">See the four phases</a>
+      </div>
+    </section>
+
+    <!-- what shipped ----------------------------------------------------- -->      <section class="rm-section">
+      <div class="eyebrow">What&rsquo;s live on testnet</div>
+      <h2>A prepaid credit economy with an audit trail</h2>
+      <p class="rm-intro">
+        Thirty-three epics, read as one product. Every piece below runs on
+        the Slotfare testnet today: the credit, metering and settlement
+        design, on Solana, and that design is the payment substrate the
+        lease will ride on.
+      </p>
+      <div class="rm-grid">
+        <div class="card rm-card">
+          <span class="pill pill-ok">Live on testnet</span>
+          <h3>Attested deposits</h3>
+          <p>A stablecoin transfer into the treasury mints credits to the sender in the very transaction that pays. Deposit, confirm, spend: the transfer itself is the proof, with no third protocol in the middle.</p>
+        </div>
+        <div class="card rm-card">
+          <span class="pill pill-ok">Live on testnet</span>
+          <h3>Metered credits with receipts</h3>
+          <p>Every settlement is bound to a committed usage root. Responses carry signed receipts a user can check against the committed leaf.</p>
+        </div>
+        <div class="card rm-card">
+          <span class="pill pill-ok">Live on testnet</span>
+          <h3>A credit market</h3>
+          <p>Credits can be listed, locked, matured and sold to another wallet in one atomic sale.</p>
+        </div>
+        <div class="card rm-card">
+          <span class="pill pill-ok">Live on testnet</span>
+          <h3>The console</h3>
+          <p>Shows all of it: the anatomy of every deposit, the credit market, and the usage proofs and receipts behind each settlement.</p>
+        </div>
+      </div>
+      <p class="rm-note">
+        Metered inference was the demonstration, not the product. The endpoint
+        stays up on testnet as the demo it is, and gets no further work.
+      </p>
+    </section>
+
+    <!-- the product ------------------------------------------------------ -->
+    <section class="rm-section">
+      <div class="eyebrow">What the product is</div>
+      <h2>Lease a machine. Settle it on the chain.</h2>
+      <p class="rm-intro">
+        A person with a machine, one GB10 or a rack, lists it. A person who
+        needs it leases it. Nobody has to invest to participate, and nobody
+        has to trust the other side.
+      </p>
+      <ol class="rm-steps">
+        <li>
+          <span class="rm-step-n">1</span>
+          <div>
+            <h3>List a machine</h3>
+            <p>Flash the Slotfare image, and the machine registers itself. The on-ramp withholds a share of earned revenue instead of asking for capital, so a machine and no cash is enough to start.</p>
+          </div>
+        </li>
+        <li>
+          <span class="rm-step-n">2</span>
+          <div>
+            <h3>Lease it with escrow</h3>
+            <p>Credits go into an escrow the chain holds. The provider is paid per epoch against evidence it did not author alone. A lease that stops delivering stops paying.</p>
+          </div>
+        </li>
+        <li>
+          <span class="rm-step-n">3</span>
+          <div>
+            <h3>Connect with your key</h3>
+            <p>Your SSH key, over a private tunnel that only the active lease can open. When the lease ends, the machine reboots clean and your data is gone by design.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- phases ----------------------------------------------------------- -->
+    <section class="rm-section" id="phases">
+      <div class="eyebrow">The road to mainnet</div>
+      <h2>Four phases, each one shippable on its own</h2>
+      <p class="rm-intro">
+        Each phase ends with something a person can do that they could not do
+        before. No dates. The order is the plan.
+      </p>
+      <ol class="rm-timeline">
+        @for (p of phases; track p.title; let i = $index) {
+          <li class="rm-phase">
+            <div class="rm-phase-rail"><span class="rm-phase-dot">{{ i + 1 }}</span></div>
+            <div class="card rm-phase-card">
+              <div class="rm-phase-head">
+                <h3>{{ p.title }}</h3>
+                <span class="pill" [class.pill-live]="i === 0" [class.pill-wait]="i !== 0">{{ i === 0 ? 'Next' : 'Planned' }}</span>
+              </div>
+              <p>{{ p.makesTrue }}</p>
+              <p class="rm-done"><slf-icon name="check" [width]="2.2" /><span><b>Done when</b> {{ p.doneWhen }}</span></p>
+            </div>
+          </li>
+        }
+      </ol>
+      <p class="rm-note">
+        The current console stays up as the hackathon artifact. The marketplace
+        is a new frontend, built for the lease.
+      </p>
+    </section>
+
+    <!-- the lease concretely --------------------------------------------- -->
+    <section class="rm-section">
+      <div class="eyebrow">The lease, concretely</div>
+      <h2>The whole machine, not an API on it</h2>
+      <div class="rm-grid">
+        <div class="card rm-card">
+          <slf-icon name="key" [width]="1.8" />
+          <h3>Your key is the credential</h3>
+          <p>You generate an SSH key pair in the browser at lease time. The public key goes into the lease record on chain. Nothing else authorizes access.</p>
+        </div>
+        <div class="card rm-card">
+          <slf-icon name="shield" [width]="1.8" />
+          <h3>The tunnel is the second wall</h3>
+          <p>The provider agent opens a private tunnel for the active lease only, using tailcat: Tailscale&rsquo;s data plane with no control plane, no accounts, and no server that could add a peer. The chain is the only place a peer gets authorized.</p>
+        </div>
+        <div class="card rm-card">
+          <slf-icon name="cube" [width]="1.8" />
+          <h3>The image does the work</h3>
+          <p>A NixOS image with a pinned flake: the agent, tailcat, the SSH server and nothing else. Reproducible by construction, so its measurement can be published.</p>
+        </div>
+        <div class="card rm-card">
+          <slf-icon name="route" [width]="1.8" />
+          <h3>The machine is ephemeral</h3>
+          <p>Lease end drops the peer, wipes the key and reboots into a clean generation. Data on a leased machine is gone by design.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- gate ------------------------------------------------------------- -->
+    <section class="rm-section">
+      <div class="eyebrow">The mainnet gate</div>
+      <h2>Conditions, not a date</h2>
+      <ul class="rm-gate">
+        <li><span class="rm-box" aria-hidden="true"></span> All four phases run on a public testnet.</li>
+        <li><span class="rm-box" aria-hidden="true"></span> At least one provider and one lessee who are not the authors have completed a lease.</li>
+        <li><span class="rm-box" aria-hidden="true"></span> The open problems list is published unchanged. Nothing on it is claimed solved, and the dispute adjudicator stays named as unsolved.</li>
+        <li><span class="rm-box" aria-hidden="true"></span> Credits at launch are prepaid with no exit door. The standing bid ships with cross-chain settlement, and mainnet does not wait for it.</li>
+      </ul>
+    </section>
+
+    <!-- honest parts ----------------------------------------------------- -->
+    <section class="rm-section">
+      <div class="eyebrow">Named, not hidden</div>
+      <h2>What stays trusted, and what stays unsolved</h2>
+      <div class="rm-grid">
+        <div class="card rm-card">
+          <h3>The relay</h3>
+          <p>When a direct path fails, the tunnel falls back to a relay. It is encrypted end to end, so the relay cannot read or inject, but it can be unavailable. Providers at the 99.9 percent tier and above must be directly reachable.</p>
+        </div>
+        <div class="card rm-card">
+          <h3>The adjudicator</h3>
+          <p>Nobody in this sector has decentralized who decides a dispute. The design caps per-lease exposure and invalidates evidence under deterministic rules, and leaves the adjudicator on the open problems list.</p>
+        </div>
+      </div>
+      <p class="rm-note">
+        The full list, with every rejected design and the reason, is kept in
+        the project&rsquo;s decision log.
+      </p>
+    </section>
+
+    <!-- after ------------------------------------------------------------ -->
+    <section class="rm-section">
+      <div class="eyebrow">After mainnet</div>
+      <h2>Not planned here, in the order they become possible</h2>
+      <ul class="rm-later">
+        <li><span class="pill pill-wait">Later</span> The standing bid, once cross-chain settlement ships.</li>
+        <li><span class="pill pill-wait">Later</span> Confidential compute tiers, once the measured image registry exists.</li>
+        <li><span class="pill pill-wait">Later</span> One-click inference on a lease: pick a model your machine can run, and the image sets it up.</li>
+        <li><span class="pill pill-wait">Later</span> Correctness sampling for inference tenants.</li>
+        <li><span class="pill pill-wait">Later</span> The metering subchain, at the settlement rate that makes it necessary.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer class="rm-foot">
+    <span class="muted">Slotfare. Built by vishnuraj. Testnet only. No funds move.</span>
+  </footer>
+</div>

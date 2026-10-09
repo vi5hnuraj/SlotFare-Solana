@@ -1,0 +1,121 @@
+<section class="page">
+  <div class="page-head">
+    <h2>Transactions</h2>
+    <p>
+      Every way this account's money moves: credits bought (USDC deposits on
+      Solana, or bought on the market) and credits sold. Open a row to follow
+      it to where it stands.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Transactions</h3>
+      <span class="spacer"></span>
+      <span class="muted" style="font-size:12px">{{ store.transactionCount() }} shown</span>
+    </div>
+
+    <div class="txn-filters" role="group" aria-label="Filter transactions">
+      @for (f of filters; track f.key) {
+        <button
+          type="button"
+          class="txn-filter"
+          [class.is-active]="isActive(f.key)"
+          [attr.aria-current]="isActive(f.key) ? 'true' : null"
+          (click)="pickFilter(f.key)"
+        >{{ f.label }}</button>
+      }
+    </div>
+
+    @if (store.fundingInitial()) {
+      <slf-skeleton rows="4" />
+    } @else if (store.fundingError()) {
+      <slf-error-block [message]="store.fundingError()!" (retry)="store.startPolling()"
+                       (dismiss)="store.clearFundingError()" />
+    } @else if (store.filteredTransactions().length === 0) {
+      @switch (store.transactionFilter()) {
+        @case ('buying') {
+          <slf-empty-block title="Nothing bought yet"
+                           detail="Deposits and market buys appear here the moment they are seen."
+                           icon="route" />
+        }
+        @case ('selling') {
+          <slf-empty-block title="Nothing sold yet"
+                           detail="Sell orders appear here as soon as you list credits."
+                           icon="shield" />
+        }
+        @default {
+          <slf-empty-block title="No transactions yet"
+                           detail="Credits are bought on the Add credits screen and sold on the Sell screen. Each appears here the moment it is seen."
+                           icon="route" />
+        }
+      }
+    } @else {
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="num">Credits</th>
+              <th class="hide-m">Price</th>
+              <th class="hide-m">Type</th>
+              <th>Status</th>
+              <th class="hide-m">Network</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of store.filteredTransactions(); track row.id) {
+              @if (row.destination.kind === 'route') {
+                <tr class="is-clickable" role="link" tabindex="0"
+                    [routerLink]="row.destination.path"
+                    (keydown.enter)="$event.preventDefault()">
+                  <td>{{ localTime(row.at) }}</td>
+                  <td class="num">{{ row.credits !== null ? creditText(row.credits) : '-' }}</td>
+                  <td class="hide-m">{{ row.priceText ?? '-' }}</td>
+                  <td class="hide-m" data-th="Type"><span class="eyebrow">{{ kindLabel(row.kind) }}</span></td>
+                  <td data-th="Status">
+                    <span class="pill"
+                          [class.pill-ok]="row.statusText === 'Settled' || row.statusText === 'Bought' || row.statusText === 'Sold' || row.statusText === 'Matured'"
+                          [class.pill-live]="row.statusText === 'Pending' || row.statusText === 'Proving' || row.statusText === 'Buying'"
+                          [class.pill-wait]="row.statusText === 'Cancelled' || row.statusText === 'Failed'"
+                          [class.pill-value]="row.statusText === 'For sale'">{{ row.statusText }}</span>
+                  </td>
+                  <td class="hide-m" data-th="Network"><span class="chain-badge">{{ row.chainName }}</span></td>
+                  <td class="num"><slf-icon name="chevron" [width]="2" /></td>
+                </tr>
+              } @else {
+                <tr>
+                  <td>{{ localTime(row.at) }}</td>
+                  <td class="num">{{ row.credits !== null ? creditText(row.credits) : '-' }}</td>
+                  <td class="hide-m">{{ row.priceText ?? '-' }}</td>
+                  <td class="hide-m" data-th="Type"><span class="eyebrow">{{ kindLabel(row.kind) }}</span></td>
+                  <td data-th="Status">
+                    <span class="pill"
+                          [class.pill-ok]="row.statusText === 'Settled' || row.statusText === 'Bought' || row.statusText === 'Sold' || row.statusText === 'Matured'"
+                          [class.pill-live]="row.statusText === 'Pending' || row.statusText === 'Proving' || row.statusText === 'Buying'"
+                          [class.pill-wait]="row.statusText === 'Cancelled' || row.statusText === 'Failed'"
+                          [class.pill-value]="row.statusText === 'For sale'">{{ row.statusText }}</span>
+                  </td>
+                  <td class="hide-m" data-th="Network"><span class="chain-badge">{{ row.chainName }}</span></td>
+                  <td class="num">
+                    <a [href]="row.destination.href" target="_blank" rel="noopener" class="xlink" [attr.title]="row.destination.label">
+                      <slf-icon name="chevron" [width]="2" />
+                    </a>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (hasMore()) {
+        <div class="load-more">
+          <button type="button" class="btn btn-secondary btn-block"
+                  [disabled]="store.loadingMoreTransactions()"
+                  (click)="loadMore()">Load more</button>
+        </div>
+      }
+    }
+  </div>
+</section>

@@ -1,0 +1,115 @@
+<section class="page">
+  <div class="page-head">
+    <h2>Models</h2>
+    <p>
+      Every model the endpoint serves, with its context window and headline
+      pricing. Open a model for the full details and a ready-to-copy example.
+    </p>
+  </div>
+
+  <slf-inference-notice />
+
+  @if (store.modelsInitial()) {
+    <div class="card"><div class="card-body"><slf-skeleton rows="4" /></div></div>
+  } @else if (store.modelsError()) {
+    <div class="card">
+      <div class="card-body">
+        <slf-error-block [message]="store.modelsError()!" (retry)="store.loadModels()"
+                         (dismiss)="store.clearModelsError()" />
+      </div>
+    </div>
+  } @else {
+    <div class="model-list">
+      <input class="input model-search" type="search" placeholder="Search models"
+             aria-label="Search models" [value]="state().search"
+             (input)="onSearch($any($event).target.value)" />
+
+      @if (bp() === 'mobile') {
+        <button type="button" class="model-filters-toggle"
+                [attr.aria-expanded]="sheetOpen()"
+                (click)="sheetOpen.set(!sheetOpen())">
+          Filters@if (activeCount() > 0) { ({{ activeCount() }}) }
+        </button>
+      }
+
+      @if (bp() === 'mobile' ? sheetOpen() : true) {
+        <div class="model-filters" [class.model-sheet]="bp() === 'mobile'">
+          <div class="model-filter-row">
+            <span class="model-filter-lbl">Vendor</span>
+            <div class="model-chips">
+              @for (v of vendors(); track v.label) {
+                <button type="button" class="model-chip"
+                        [class.is-active]="state().vendors.includes(v.label)"
+                        [attr.aria-pressed]="state().vendors.includes(v.label)"
+                        (click)="toggleVendor(v.label)">
+                  {{ vendorName(v.label) }} <span class="count">({{ v.count }})</span>
+                </button>
+              }
+            </div>
+            @if (activeCount() > 0) {
+              <span class="model-filter-active">
+                <span class="muted">{{ activeCount() }} filter{{ activeCount() === 1 ? '' : 's' }} active</span>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="clearAll()">Clear all</button>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (filtered().length === 0) {
+        <p class="muted model-empty">
+          @if (activeCount() > 0) { No models match {{ emptyReason() }}. }
+          @else { No models available. }
+        </p>
+      } @else {
+        <div class="model-list-body" role="group" aria-label="Models">
+          @for (m of filtered(); track m.id) {
+            <a class="model-row" routerLink="/models/{{ m.id }}">
+              <span class="model-logo">
+                @if (vendorLogo(m.vendor)) {
+                  <img class="model-logo-img" [src]="vendorLogo(m.vendor)" [alt]="vendorName(m.vendor)" />
+                } @else {
+                  <span class="avatar">{{ (m.name.charAt(0) || '?').toUpperCase() }}</span>
+                }
+              </span>
+              <span class="model-info">
+                <span class="model-line">
+                  <span class="model-name">{{ m.name }}</span>
+                  @if (m.servingPath !== undefined && m.servingPath !== 'standard') {
+                    <span class="model-badge">{{ m.servingPath }}</span>
+                  }
+                  @if (m.capabilities !== undefined) {
+                    @for (c of m.capabilities; track c) {
+                      <span class="cap-badge">{{ capLabel(c) }}</span>
+                    }
+                  }
+                </span>
+                @if (m.vendor !== undefined || m.contextLength !== undefined) {
+                <span class="model-context">
+                  @if (m.vendor !== undefined) {
+                    <span class="model-context-vendor">{{ vendorName(m.vendor) }}</span>
+                  }
+                  @if (m.vendor !== undefined && m.contextLength !== undefined) {
+                    <span class="model-context-sep" aria-hidden="true">·</span>
+                  }
+                  @if (m.contextLength !== undefined) {
+                    <span>Context {{ contextShort(m.contextLength!) }}</span>
+                  }
+                </span>
+                }
+                @if (m.description !== undefined) {
+                  <span class="model-desc">{{ m.description }}</span>
+                }
+              </span>
+              <span class="model-pricing">
+                @for (l of pricingLines(m); track l.label) {
+                  <span class="model-price-line"><span class="model-price-val">{{ l.value }}</span> <span class="model-price-lbl">{{ l.label }}</span></span>
+                }
+              </span>
+            </a>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,147 @@
+<section class="page">
+  <div class="page-head">
+    <div class="page-head-row">
+      <h2>Market</h2>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" type="button" (click)="openSellPanel()">Sell credits</button>
+    </div>
+    <p>
+      Everything for sale, newest first. Buying pays the seller and moves the
+      credits in one transaction on Solana. It is atomic: nothing is held
+      by anyone in between.
+    </p>
+  </div>
+
+  @if (sellPanelOpen()) {
+    <div class="sell-panel">
+      <div class="sell-panel-bar">
+        <span class="eyebrow">Place a sell order - the market refreshes when it lands.</span>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost btn-sm" type="button"
+                aria-label="Close sell panel"
+                [disabled]="sellBusy()" (click)="closeSellPanel()">Close</button>
+      </div>
+      <slf-sell />
+    </div>
+  }
+
+  @if (store.marketInitial()) {
+    <div class="card"><div class="card-body"><slf-skeleton rows="4" /></div></div>
+  } @else if (store.marketError()) {
+    <div class="card">
+      <div class="card-body">
+        <slf-error-block [message]="store.marketError()!" (retry)="store.loadMarket()"
+                         (dismiss)="store.clearMarketError()" />
+      </div>
+    </div>
+  } @else if (store.market().length === 0) {
+    <div class="card">
+      <div class="card-body">
+        <slf-empty-block title="Nothing for sale right now"
+                         detail="Open listings appear here the moment the market has one."
+                         icon="grid" />
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-head">
+        <h3>For sale</h3><span class="spacer"></span>
+        @if (store.forSaleCount() !== store.buyableCount()) {
+          <span class="eyebrow">{{ num(store.forSaleCount()) }} for sale, {{ num(store.buyableCount()) }} buyable for you</span>
+        } @else {
+          <span class="eyebrow">{{ num(store.buyableCount()) }} buyable</span>
+        }
+      </div>
+      <div class="table-wrap">
+        <table class="tbl stackable">
+          <thead>
+            <tr>
+              <th>Credits</th><th>Price</th><th>Token</th>
+              <th>Maturity</th><th>Seller</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of store.market(); track l.id) {
+              <tr>
+                <td data-th="Credits" class="u-mono u-strong">{{ creditText(l.credits) }}</td>
+                <td data-th="Price" class="u-mono">{{ priceText(l) }}</td>
+                <td data-th="Token">{{ priceLabel(l) }}</td>
+                <td data-th="Maturity">
+                  @if (l.matured) {
+                    <span class="pill pill-ok">Matured</span>
+                  } @else {
+                    <span class="pill pill-wait">Not mature yet</span>
+                    <span class="muted" style="font-size:12px;display:block;margin-top:4px">
+                      {{ maturityHint(l) }}
+                    </span>
+                  }
+                </td>
+                <td data-th="Seller">
+                  @if (l.mine) {
+                    <span class="pill pill-value">Yours</span>
+                  } @else {
+                    <span class="muted" style="font-size:12.5px">-</span>
+                  }
+                </td>
+                <td data-th="" class="num">
+                  @if (l.mine) {
+                    <button class="btn btn-ghost btn-sm" type="button"
+                            [disabled]="sellBusy()" (click)="doCancel(l)">{{ sellBusy() ? 'Cancelling...' : 'Cancel' }}</button>
+                  } @else if (!l.matured) {
+                    <button class="btn btn-ghost btn-sm" type="button" disabled>Buy (not mature)</button>
+                  } @else {
+                    <button class="btn btn-primary btn-sm" type="button"
+                            [disabled]="buy.busy()" (click)="doBuy(l)">{{ buy.busy() ? 'Buying...' : 'Buy' }}</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <div class="notice" style="margin-top:var(--s4)">
+    <slf-icon name="info" [width]="1.8" />
+    <span>
+      <span style="display:block">One transaction does both: it pays the seller and transfers the credits, atomically.</span>
+      <span style="display:block" class="muted">If it reverts, nothing moved and nothing is owed. Your money never leaves your wallet on a partial step.</span>
+    </span>
+  </div>
+
+  @if (buyListingGone()) {
+    <p class="muted" style="margin-top:var(--s4);line-height:1.6">
+      Someone else bought this listing first. Nothing was paid, and the list
+      above is refreshed.
+    </p>
+  } @else if (buyError() === buyRejected) {
+    <div class="notice notice-x" style="margin-top:var(--s4)" aria-live="polite">
+      <slf-icon name="info" [width]="1.8" />
+      <span>{{ buyError() }}</span>
+      <button class="icon-btn state-close" type="button" aria-label="Dismiss"
+              (click)="buy.dismissError()">
+        <slf-icon name="close" />
+      </button>
+    </div>
+  } @else if (buyError()) {
+    <slf-error-block [message]="buyError()!" (retry)="store.loadMarket()"
+                     (dismiss)="buy.dismissError()"
+                     style="margin-top:var(--s4)" />
+  }
+
+  @if (cancelError() === cancelRejected) {
+    <div class="notice notice-x" style="margin-top:var(--s4)" aria-live="polite">
+      <slf-icon name="info" [width]="1.8" />
+      <span>{{ cancelError() }}</span>
+      <button class="icon-btn state-close" type="button" aria-label="Dismiss"
+              (click)="sell.dismissError()">
+        <slf-icon name="close" />
+      </button>
+    </div>
+  } @else if (cancelError()) {
+    <slf-error-block [message]="cancelError()!" (retry)="store.loadMarket()"
+                     (dismiss)="sell.dismissError()"
+                     style="margin-top:var(--s4)" />
+  }
+</section>
