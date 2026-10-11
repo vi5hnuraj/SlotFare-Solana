@@ -1,0 +1,17 @@
+{
+  "_comment": "Live devnet deployment. Public keys only; the fee-payer private key and any provider API key live in the gitignored .env. See deployments/README.md.",
+  "environment": "devnet",
+  "cluster": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "treasury": "ZRtGMMmAvvFHpJHpJjCBY6NFt53dPUewDLGTAS7J2mx",
+  "mint": "AQpqDoMHBWPt1hLbjFN7itwUcH8wXdPzA1pY2w1izYRz",
+  "feePayer": "DNLrYH56m6A1wnVksPAY2G747kaKDpv2vra7CEi96v8b",
+  "treasuryOwner": "Cq1JifKBnU6EyWNVgj3eEXx5Th5u44camD2PsEmGJ9BJ",
+  "commitProgram": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+  "ledgerProgram": "2GiCtSotdJ5PtCRvLtkYnrd4JT5TjkkugzJzqbmDw226",
+  "upgradeAuthority": "Cq1JifKBnU6EyWNVgj3eEXx5Th5u44camD2PsEmGJ9BJ",
+  "consoleUrl": "http://127.0.0.1:4200",
+  "apiUrl": "http://127.0.0.1:8443",
+  "deployedAt": "2026-10-11T08:17:20Z",
+  "gitRevision": "uncommitted"
+}
