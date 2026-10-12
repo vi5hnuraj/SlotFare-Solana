@@ -1,0 +1,82 @@
+# RUNNER ASSUMPTIONS (edit here, this is the one obvious place)
+#   - Gitea Actions runs GitHub-Actions-syntax YAML from .gitea/workflows/,
+#     loaded from the repository root. The copy that used to live under
+#     web/ was never picked up by this repository, so no CI ran at all.
+#   - CI runs on the cluster's act runners (label arm64, Ubuntu container).
+#     Go comes from setup-go, Node from setup-node, Rust from rustup.
+#   - Three independent jobs, mirroring the gates README documents:
+#     gofmt + build + vet + test (Go), fmt + test + clippy (the on-chain
+#     program), build + test (the console). All of them are offline - no
+#     cluster, no database, no paid API - which is what makes them green
+#     on every push.
+#   - The console's test step is the repository's own script
+#     (web/scripts/ng-gate.sh), which reconciles node_modules against
+#     package.json before invoking ng.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  go:
+    runs-on: arm64
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: gofmt
+        run: make fmt-check
+      - name: build
+        run: make build
+      - name: vet
+        run: make vet
+      - name: test
+        run: make test
+
+  program:
+    runs-on: arm64
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: format
+        run: make rust-fmt
+      - name: test
+        run: make rust-test
+      - name: clippy
+        run: make rust-clippy
+
+  console:
+    runs-on: arm64
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cache npm packages by lockfile hash; npm ci deletes node_modules
+      # before installing, so what is cached is the npm package cache
+      # (cacache), not node_modules itself.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: install
+        run: make web-install
+      - name: build
+        run: web/scripts/ng-gate.sh build
+      - name: test
+        run: web/scripts/ng-gate.sh test --watch=false

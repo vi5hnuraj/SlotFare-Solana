@@ -1,0 +1,45 @@
+# RUNNER ASSUMPTIONS (edit here, this is the one obvious place)
+#   - Gitea Actions runs GitHub-Actions-syntax YAML from .gitea/workflows/.
+#   - Triggered by publishing a Gitea release; the release tag becomes the
+#     image tag and the same image is also pushed as :latest.
+#   - The console image builds from web/, which holds the Dockerfile and its
+#     context; the workflow lives at the repository root because that is
+#     where Gitea loads workflows from.
+#   - Runs on the cluster's act runners (label arm64, jobs get a Docker
+#     daemon through DOCKER_HOST); the host is arm64, so a plain
+#     --platform linux/arm64 build is native.
+#   - Registry secrets (organisation level in Gitea): REGISTRY_URL is the
+#     image prefix (the Docker Hub organisation, e.g. svrnty, or a private
+#     registry host plus namespace), REGISTRY_USERNAME and REGISTRY_PASSWORD
+#     log in to Docker Hub. Never inline a host or credential here.
+name: release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  image:
+    runs-on: arm64
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - env:
+          IMAGE: ${{ secrets.REGISTRY_URL }}/slotfare-console
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          docker buildx build --platform linux/arm64 \
+            -t "${IMAGE}:${TAG}" \
+            -t "${IMAGE}:latest" \
+            --push ./web
